@@ -214,5 +214,13 @@ export function usePlaylistActions() {
     ]
   }
 
-  return { contextFor, play, downloadMissing, redownloadAll, watch, remove, menuFor }
+  return {
+    contextFor,
+    play,
+    downloadMissing,
+    redownloadAll,
+    watch,
+    remove,
+    menuFor,
+  }
 }
