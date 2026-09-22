@@ -368,7 +368,8 @@ export default {
     watch: 'Watch for new tracks',
     linkSpotify: 'Link to Spotify',
     linkSpotifyTitle: 'Link playlist to Spotify',
-    linkSpotifyBody: 'Paste the Spotify playlist URL to link this playlist for tracking.',
+    linkSpotifyBody:
+      'Paste the Spotify playlist URL to link this playlist for tracking.',
     invalidSpotifyUrl: 'Please enter a valid Spotify playlist URL',
     openSource: 'Open original playlist',
     delete: 'Delete playlist',

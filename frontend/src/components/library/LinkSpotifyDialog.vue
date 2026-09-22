@@ -35,10 +35,14 @@
               class="flex items-start gap-2 text-sm text-danger"
               role="alert"
             >
-              <AppIcon name="alert" :size="16" class="mt-0.5 shrink-0" />{{ error }}
+              <AppIcon name="alert" :size="16" class="mt-0.5 shrink-0" />{{
+                error
+              }}
             </p>
           </form>
-          <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div
+            class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"
+          >
             <UiButton variant="ghost" type="button" @click="$emit('close')">
               {{ t('common.cancel') }}
             </UiButton>
