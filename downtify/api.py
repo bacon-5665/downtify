@@ -2781,6 +2781,59 @@ async def _schedule_playlist_refresh_after_delete(
     asyncio.create_task(_run())
 
 
+@router.post('/api/library/playlist/link')
+async def link_playlist_to_spotify(
+    body: dict[str, Any] = Body(...),
+) -> dict[str, Any]:
+    """Link an existing playlist to a Spotify playlist by URL."""
+
+    playlist_name = str(body.get('playlist_name') or '').strip()
+    spotify_url = str(body.get('spotify_url') or '').strip()
+
+    if not playlist_name:
+        raise HTTPException(status_code=400, detail='playlist_name is required')
+    if not spotify_url:
+        raise HTTPException(status_code=400, detail='spotify_url is required')
+
+    if state.playlist_catalog is None:
+        raise HTTPException(status_code=500, detail='Playlist catalog not available')
+
+    parsed = spotify.parse_spotify_url(spotify_url)
+    if parsed is None or parsed[0] != 'playlist':
+        raise HTTPException(status_code=400, detail='Invalid Spotify playlist URL')
+
+    _, spotify_playlist_id = parsed
+
+    def _run() -> dict[str, Any]:
+        state.playlist_catalog.ensure_playlist(
+            playlist_name, spotify_id=spotify_playlist_id
+        )
+        if state.playlist_spotify_cache is not None:
+            try:
+                name, tracks = fetch_playlist_tracks(
+                    spotify_playlist_id,
+                    cache=state.playlist_spotify_cache,
+                    refresh=True,
+                )
+                state.playlist_spotify_cache.store(
+                    spotify_playlist_id, name, tracks
+                )
+            except Exception as exc:
+                logger.warning(
+                    'Failed to fetch Spotify playlist metadata for {}: {}',
+                    spotify_playlist_id,
+                    exc,
+                )
+        return {
+            'playlist_name': playlist_name,
+            'spotify_playlist_id': spotify_playlist_id,
+            'linked': True,
+        }
+
+    result = await asyncio.to_thread(_run)
+    return result
+
+
 @router.delete('/api/library/playlist')
 async def delete_library_playlist_endpoint(
     playlist_name: str = Query(..., min_length=1),

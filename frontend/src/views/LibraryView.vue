@@ -224,6 +224,7 @@ import { usePlayer } from '/src/model/player'
 import { useTrackActions } from '/src/model/trackActions'
 import { usePlaylistActions } from '/src/model/playlistActions'
 import { useUi } from '/src/model/ui'
+import API from '/src/model/api'
 import { albumKey, artistKey, filterItems, sortItems } from '/src/lib/library'
 import { formatBytes, splitLength } from '/src/lib/format'
 import { useI18n } from '/src/i18n'
@@ -488,8 +489,34 @@ function playItem(item) {
   }
 }
 
+async function linkSpotify(playlist) {
+  const url = window.prompt(t('playlists.linkSpotifyBody'))
+  if (!url) return
+  try {
+    await API.linkPlaylistToSpotify({
+      playlist_name: playlist.name,
+      spotify_url: url,
+    })
+    ui.toast(t('toast.playlistLinked'), { kind: 'success' })
+    library.refreshSoon(500)
+  } catch (err) {
+    ui.toast(err?.response?.data?.detail || t('toast.actionFailed'), {
+      kind: 'error',
+    })
+  }
+}
+
 function playlistMenu(item) {
-  return playlistActions.menuFor(item)
+  const batch = item.batch
+  const menu = playlistActions.menuFor(item)
+  if (!batch?.playlist_url) {
+    menu.splice(5, 0, {
+      label: t('playlists.linkSpotify'),
+      icon: 'link',
+      action: () => linkSpotify(item),
+    })
+  }
+  return menu
 }
 
 function clearFilters() {
