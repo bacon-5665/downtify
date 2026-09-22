@@ -202,6 +202,10 @@ function deleteLibraryPlaylist(playlistName) {
   })
 }
 
+function linkPlaylistToSpotify(payload) {
+  return API.post('/api/library/playlist/link', payload)
+}
+
 function reconcileLibrary() {
   return API.post('/api/library/reconcile')
 }
@@ -382,6 +386,7 @@ export default {
   deleteDownload,
   deleteDownloadsBatch,
   deleteLibraryPlaylist,
+  linkPlaylistToSpotify,
   prepareLibraryArchive,
   libraryArchiveURL,
   reconcileLibrary,
