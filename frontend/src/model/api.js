@@ -148,6 +148,10 @@ function downloadMissingPlaylistTracks(payload) {
   return API.post('/api/playlists/incomplete/download-missing', payload)
 }
 
+function redownloadAllPlaylistTracks(payload) {
+  return API.post('/api/playlists/redownload-all', payload)
+}
+
 function deletePlaylistBatch(spotifyPlaylistId) {
   return API.delete(
     `/api/playlists/batches/${encodeURIComponent(spotifyPlaylistId)}`
@@ -375,6 +379,7 @@ export default {
   getPlaylistBatches,
   getPlaylistBatchDetails,
   downloadMissingPlaylistTracks,
+  redownloadAllPlaylistTracks,
   deletePlaylistBatch,
   downloadFileURL: fileURL,
   downloadSaveName: saveName,

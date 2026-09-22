@@ -57,6 +57,8 @@ working without changes:
 * ``GET  /api/playlists/incomplete`` and
   ``POST /api/playlists/incomplete/download-missing`` (queue only the
   tracks a downloaded playlist is still missing)
+* ``POST /api/playlists/redownload-all`` (queue all tracks from a
+  Spotify playlist for redownload)
 * ``GET  /api/settings``
 * ``POST /api/settings/update``
 * ``POST /api/slskd/test`` and ``POST /api/navidrome/test`` (try the
@@ -3077,6 +3079,69 @@ async def download_missing_playlist_tracks_endpoint(
         batch_id=batch_id,
     )
     result['missing_count'] = len(missing)
+    result['playlist_name'] = playlist_name
+    return result
+
+
+@router.post('/api/playlists/redownload-all')
+async def redownload_all_playlist_tracks_endpoint(
+    body: dict[str, Any] = Body(...),
+) -> dict[str, Any]:
+    """Queue all tracks from a Spotify playlist for redownload."""
+
+    if state.downloader is None:
+        raise HTTPException(status_code=500, detail='Downloader not ready')
+
+    spotify_playlist_id = str(body.get('spotify_playlist_id') or '').strip()
+    playlist_url = str(body.get('playlist_url') or '').strip()
+    if not spotify_playlist_id and playlist_url:
+        parsed = spotify.parse_spotify_url(playlist_url)
+        if parsed is not None and parsed[0] == 'playlist':
+            spotify_playlist_id = parsed[1]
+    if not spotify_playlist_id:
+        raise HTTPException(
+            status_code=400,
+            detail='spotify_playlist_id or playlist_url required',
+        )
+
+    try:
+        playlist_name, tracks = _fetch_playlist_tracks(spotify_playlist_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail='Failed to fetch playlist from Spotify'
+        ) from exc
+
+    if not tracks:
+        raise HTTPException(
+            status_code=404, detail='Playlist has no tracks'
+        )
+
+    resolved_url = f'https://open.spotify.com/playlist/{spotify_playlist_id}'
+    generate_m3u = bool(body.get('generate_m3u', True))
+    batch_id: Optional[int] = None
+    if state.playlist_batch_store is not None:
+        batch_id = await asyncio.to_thread(
+            state.playlist_batch_store.start_batch,
+            spotify_playlist_id,
+            playlist_name,
+            resolved_url,
+            len(tracks),
+        )
+
+    songs: list[dict[str, Any]] = []
+    for index, track in enumerate(tracks):
+        song = dict(track)
+        song['downtify_playlist_url'] = resolved_url
+        song['downtify_track_order'] = index
+        songs.append(song)
+
+    result = await _submit_playlist_batch(
+        songs,
+        resolved_url,
+        generate_m3u=generate_m3u,
+        batch_id=batch_id,
+    )
+    result['count'] = len(tracks)
     result['playlist_name'] = playlist_name
     return result
 

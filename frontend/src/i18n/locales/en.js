@@ -363,6 +363,7 @@ export default {
       one: 'Download {count} missing',
       other: 'Download {count} missing',
     },
+    redownloadAll: 'Download all again',
     downloading: { one: '{count} downloading', other: '{count} downloading' },
     complete: 'Complete',
     watch: 'Watch for new tracks',
@@ -852,6 +853,10 @@ export default {
     queuedMissing: {
       one: 'Queued {count} missing track',
       other: 'Queued {count} missing tracks',
+    },
+    queuedRedownload: {
+      one: 'Queued {count} track for redownload',
+      other: 'Queued {count} tracks for redownload',
     },
     playlistComplete: 'Nothing missing — the playlist is complete',
     playlistLinked: 'Playlist linked to Spotify',

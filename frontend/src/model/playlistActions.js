@@ -60,6 +60,33 @@ export function usePlaylistActions() {
     }
   }
 
+  async function redownloadAll(playlist) {
+    const batch = playlist.batch
+    if (!batch) return
+    try {
+      const res = await API.redownloadAllPlaylistTracks({
+        spotify_playlist_id: batch.spotify_playlist_id,
+        playlist_url: batch.playlist_url,
+      })
+      const count = res.data?.count || 0
+      if (count) {
+        ui.toast(t('toast.queuedRedownload', { count }), {
+          kind: 'success',
+          action: {
+            label: t('nav.queue'),
+            run: () => router.push({ name: 'Queue' }),
+          },
+        })
+        syncQueueFromServer().catch(() => {})
+      }
+      library.refreshSoon(500)
+    } catch (err) {
+      ui.toast(err?.response?.data?.detail || t('toast.actionFailed'), {
+        kind: 'error',
+      })
+    }
+  }
+
   async function watch(playlist) {
     const url = playlist.batch?.playlist_url
     if (!url) return
@@ -154,6 +181,12 @@ export function usePlaylistActions() {
         action: () => downloadMissing(playlist),
       },
       {
+        label: t('playlists.redownloadAll'),
+        icon: 'refresh',
+        hidden: !batch?.playlist_url,
+        action: () => redownloadAll(playlist),
+      },
+      {
         label: t('playlists.watch'),
         icon: 'radar',
         hidden: !batch?.playlist_url || hide.includes('watch'),
@@ -181,5 +214,5 @@ export function usePlaylistActions() {
     ]
   }
 
-  return { contextFor, play, downloadMissing, watch, remove, menuFor }
+  return { contextFor, play, downloadMissing, redownloadAll, watch, remove, menuFor }
 }
